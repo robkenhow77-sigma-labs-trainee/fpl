@@ -1,6 +1,7 @@
 """FPL web scraper"""
 from argparse import ArgumentParser
 from os import remove, path
+import json
 
 from time import sleep
 from requests import get
@@ -22,6 +23,7 @@ def init_argsparse():
 
 
 def get_players_from_internet():
+    players = []
     driver = webdriver.Chrome()
     driver.get("https://www.premierleague.com/players")
     sleep(2)
@@ -30,27 +32,38 @@ def get_players_from_internet():
     footer = driver.find_element(By.TAG_NAME, "footer")
     for _ in range(20):
         ActionChains(driver).scroll_to_element(footer).perform()
-        sleep(0.1)
+        sleep(1)
         ActionChains(driver).scroll_by_amount(0,-500).perform()
-        sleep(0.1)
+        sleep(1)
+    driver.quit()
 
-    players = driver.find_elements(By.CLASS_NAME, "player__name")
+    players_names = driver.find_elements(By.CLASS_NAME, "player")
 
-    return [f'{player.text},' for player in players]
-
-
-def get_players_from_text():
-    with open("players.txt", "r", encoding="UTF-8") as file:
-        players = file.read()
-        return players.split(',')[:-1]
+    for player in players_names:
+        name = player.find_element(By.TAG_NAME, "a").text
+        link = player.find_element(By.TAG_NAME,'a').get_attribute("href")
+        players.append({"name": name, "link": link})
+    return players
 
 
 def create_players_text_file(players: list[str]) -> None:
-    if path.exists('players.txt'):
-        remove('players.txt')
+    if path.exists('players.json'):
+        remove('players.json')
 
-    with open("players.txt", 'x', encoding="UTF-8") as file:
-        file.writelines(players)
+    with open("players.json", 'x', encoding="UTF-8") as file:
+        json.dump(players, file, indent=4)
+
+
+def get_players_from_json():
+    with open("players.txt", "r", encoding="UTF-8") as file:
+        players = json.load(file)
+        return players
+
+
+def clean_names(players: list[dict]):
+    for player in players:
+        player["name"] = player["name"].encode('latin1').decode('utf-8')
+    return players
 
 
 if __name__ == "__main__":
@@ -58,5 +71,6 @@ if __name__ == "__main__":
     if new_players:
         player_names = get_players_from_internet()
         create_players_text_file(player_names)
-    player_names = get_players_from_text()
-    
+    player_names = get_players_from_json()
+    player_names = clean_names(player_names)
+    print(player_names)
