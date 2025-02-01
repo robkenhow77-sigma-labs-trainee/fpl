@@ -22,7 +22,7 @@ def init_argsparse():
     return args.scrape
 
 
-def get_players_from_internet():
+def get_players_from_internet() -> list[dict]:
     players_names_and_links = []
     driver = webdriver.Chrome()
     driver.get("https://www.premierleague.com/players")
@@ -57,13 +57,13 @@ def create_players_json(players_list: list[str]) -> None:
         json.dump(players_list, file, indent=4)
 
 
-def get_players_from_json():
+def get_players_from_json() -> list[dict]:
     with open("players.json", "r", encoding="UTF-8") as file:
         players_list = json.load(file)
         return players_list
 
 
-def get_stats(url: str):
+def get_stats(url: str) -> dict[dict]:
     statistics = {}
     url = url.replace("overview", "stats?co=1&se=719")
     res = get(url).text
@@ -89,17 +89,18 @@ def add_stats_to_player(players_list: list[dict]) -> list[dict]:
     return players_list
 
 
-
-
-
 if __name__ == "__main__":
-    new_players = init_argsparse()
-    if new_players:
+    # Initialise
+    scraping = init_argsparse()
+
+    # If scraping, get the data and create a json. Otherwise get data from json.
+    if scraping:
         players = get_players_from_internet()
+        players = add_stats_to_player(players)
         create_players_json(players)
-    players = get_players_from_json()
-    players = add_stats_to_player(players)
-    create_players_json(players)
+    else:
+        players = get_players_from_json()
+   
 
     
     
