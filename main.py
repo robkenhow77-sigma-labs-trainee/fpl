@@ -130,19 +130,3 @@ if __name__ == "__main__":
     
     # top 5 clean sheets keepers, defenders
     # most assists midfielders
-
-
-
-
-   
-
-    
-    
-    
-
-    
-   
-
-    
-    
-
