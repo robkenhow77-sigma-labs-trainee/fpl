@@ -82,6 +82,7 @@ def get_stats_for_page(driver: webdriver.Chrome, num_players) -> list:
 
         if not got_column_names:
             column_names = get_column_names(table)
+            column_names.remove("OPP")
             got_column_names = True
 
         stats = get_player_stats(table)
@@ -112,6 +113,9 @@ def make_file(all_stats: list[list[dict]]) -> None:
 
 
 def get_all_stats(driver: webdriver.Chrome, num_pages, num_players):
+    driver.get("https://fantasy.premierleague.com/statistics")
+    handle_cookie(chrome_driver)
+    sleep(2)
     status = driver.find_elements(By.XPATH, "//div[@role='status' and @aria-live='polite']")[-1]
     number_of_pages = int(status.text.split("of")[-1].strip())
 
@@ -131,15 +135,21 @@ def get_all_stats(driver: webdriver.Chrome, num_pages, num_players):
     make_file(all_stats)
 
 
+def get_game_week(driver: webdriver.Chrome) -> int:
+    driver.get("https://www.premierleague.com/home")
+    sleep(2)
+    game_week = driver.find_element(By.CLASS_NAME, "fixtures-abridged-header__title")
+    game_week = game_week.text.split(" ")
+    return int(game_week[-1])
+
+
 if __name__ == "__main__":
     chrome_driver = webdriver.Chrome()
-    chrome_driver.get("https://fantasy.premierleague.com/statistics")
-    sleep(2)
-    handle_cookie(chrome_driver)
     column_names = []
     got_column_names = False
     number_of_pages_to_scrape = 1
-    number_of_players_per_page = 2
+    number_of_players_per_page = 2 # DEV VARIABLE
+    
     get_all_stats(chrome_driver, number_of_pages_to_scrape, number_of_players_per_page)
-
+    game_week = get_game_week(chrome_driver)
     chrome_driver.quit()
