@@ -1,5 +1,6 @@
 from os import path, remove
 from time import sleep
+import json
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -14,8 +15,13 @@ def handle_cookie(driver: webdriver.Chrome) -> None:
     sleep(1)
 
 
+def scroll_to_top(driver: webdriver.Chrome) -> None:
+    ActionChains(driver).scroll_by_amount(0, -100000).perform()
+
+
 def get_table_buttons(driver: webdriver.Chrome) -> list[WebElement]:
     buttons = driver.find_elements(By.CLASS_NAME, "ElementInTable__MenuButton-sc-y9xi40-0.eGsjiN")
+    sleep(2)
     return buttons
 
 
@@ -25,6 +31,7 @@ def get_player_table(driver: webdriver.Chrome) -> WebElement:
 
 
 def get_column_names(table: WebElement) -> list[str]:
+    global column_names
     column_names = []
     header = table.find_element(By.TAG_NAME, "thead")
     headers = header.find_elements(By.TAG_NAME,"th")
@@ -43,7 +50,7 @@ def get_player_info(driver: WebElement) -> dict:
             "club": club.text}
 
 
-def get_player_stats(table: WebElement, column_names: list[str]) -> list[dict]:
+def get_player_stats(table: WebElement) -> list[dict]:
     player = []
     table_body = table.find_element(By.TAG_NAME, "tbody")
     rows = table_body.find_elements(By.TAG_NAME, "tr")
@@ -61,22 +68,27 @@ def exit_table(driver: webdriver.Chrome) -> None:
     exit.click()
 
 
-def get_stats_for_page(driver: webdriver.Chrome, got_column_names: bool) -> list:
+def get_stats_for_page(driver: webdriver.Chrome, num_players) -> list:
+    global got_column_names
+    global column_names
     buttons = get_table_buttons(driver)
-    sleep(10)    
     players = []
-    for button in buttons[:1]:
+    for button in buttons[:num_players]:
         button.click()
         sleep(0.5)
         table = get_player_table(driver)
         player_info = get_player_info(driver)
+        sleep(1)
+
         if not got_column_names:
-            columns = get_column_names(table)
+            column_names = get_column_names(table)
             got_column_names = True
-        stats = get_player_stats(table, columns)
-        stats.insert(0, player_info)
-        players.append(stats)
+
+        stats = get_player_stats(table)
+        player_info["stats"] = stats
+        players.append(player_info)
         exit_table(driver)
+
     return players
 
 
@@ -87,19 +99,19 @@ def get_page_number(driver: webdriver.Chrome) -> int:
 
 
 def change_page(driver: webdriver.Chrome) -> None:
-    button = driver.find_element(By.CLASS_NAME, "PaginatorButton__Button-sc-xqlaki-0.cmSnxm")
-    button.click()
-    sleep(1)
+    buttons = driver.find_elements(By.CLASS_NAME, "PaginatorButton__Button-sc-xqlaki-0.cmSnxm")
+    buttons[-1].click()
+    sleep(2)
 
 
 def make_file(all_stats: list[list[dict]]) -> None:
-    if path.exists('stats.txt'):
-        remove('stats.txt')
-    with open('stats.txt', 'x', encoding="UTF-8") as file:
-        file.writelines(all_stats)
+    if path.exists('stats.json'):
+        remove('stats.json')
+    with open('stats.json', 'x', encoding="UTF-8") as file:
+        json.dump(all_stats, file, indent=4)
 
 
-def get_all_stats(driver: webdriver.Chrome, column_names: bool):
+def get_all_stats(driver: webdriver.Chrome, num_pages, num_players):
     status = driver.find_elements(By.XPATH, "//div[@role='status' and @aria-live='polite']")[-1]
     number_of_pages = int(status.text.split("of")[-1].strip())
 
@@ -108,13 +120,15 @@ def get_all_stats(driver: webdriver.Chrome, column_names: bool):
 
     while scraping:
         page_number = get_page_number(driver)
-        print("ahh")
-        stats = get_stats_for_page(driver, column_names)
+        stats = get_stats_for_page(driver, num_players)
         all_stats.extend(stats)
         change_page(driver)
+        scroll_to_top(driver)
 
-        if page_number == number_of_pages:
+        if page_number == num_pages:
             scraping = False
+
+    make_file(all_stats)
 
 
 if __name__ == "__main__":
@@ -122,8 +136,10 @@ if __name__ == "__main__":
     chrome_driver.get("https://fantasy.premierleague.com/statistics")
     sleep(2)
     handle_cookie(chrome_driver)
-
-    got_columns = False
-    get_all_stats(chrome_driver, got_columns)
+    column_names = []
+    got_column_names = False
+    number_of_pages_to_scrape = 1
+    number_of_players_per_page = 2
+    get_all_stats(chrome_driver, number_of_pages_to_scrape, number_of_players_per_page)
 
     chrome_driver.quit()
