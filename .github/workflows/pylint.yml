@@ -1,4 +1,4 @@
-name: Pylint
+ame: Pylint
 
 on: push
 
@@ -8,9 +8,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
-    - uses: actions/setup-python@v3
+      uses: actions/setup-python@v3
       with:
-        python-versio: 'latest'
-      
-    - name: echo
-      run: echo hello
+        python-version: 'latest'  # Use the latest Python version available
+    - name: Install dependencies
+      run: echo helllo
