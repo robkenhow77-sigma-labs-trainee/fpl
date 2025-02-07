@@ -10,6 +10,6 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: 'latest'  # Use the latest Python version available
+        python-version: '3.11'  # Use the latest Python version available
     - name: Install dependencies
       run: echo helllo
