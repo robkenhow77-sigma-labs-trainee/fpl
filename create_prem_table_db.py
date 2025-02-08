@@ -53,15 +53,11 @@ def insert_data_to_db(conn: psycopg.Connection, table_data: list[tuple]):
         conn.commit()
         
 
-
-
 if __name__ == "__main__":
     conn_string = "postgresql:///fantasy_football?host=localhost"
     connection = psycopg.connect(conn_string)
     table_df = make_table_df()
-    print(table_df.columns)
     table_data_for_db = make_table_data_for_db(table_df)
-    print(table_data_for_db[0])
     create_table(connection)
     insert_data_to_db(connection, table_data_for_db)
     connection.close()
