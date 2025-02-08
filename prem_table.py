@@ -78,3 +78,4 @@ def make_table_df():
 
 if __name__ == "__main__":
     table_df = make_table_df()
+    print(table_df)

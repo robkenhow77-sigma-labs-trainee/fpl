@@ -22,7 +22,6 @@ def make_player_df(player_profile: dict) -> pd.DataFrame:
     return df
 
 
-
 if __name__ == "__main__":
     data = load_json()
     player = "Mohamed Salah"

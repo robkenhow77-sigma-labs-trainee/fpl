@@ -1,12 +1,22 @@
 from os import path, remove
 from time import sleep
 import json
+from argparse import ArgumentParser
+
 
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+
+
+def args_init():
+    parser = ArgumentParser()
+    # If called store true
+    parser.add_argument("-a", "--all", action="store_true", help="scrape all data")
+    args = parser.parse_args()
+    return args.all
 
 
 def handle_cookie(driver: webdriver.Chrome) -> None:
@@ -114,7 +124,7 @@ def make_file(all_stats: list[list[dict]]) -> None:
 
 def get_all_stats(driver: webdriver.Chrome, num_pages, num_players):
     driver.get("https://fantasy.premierleague.com/statistics")
-    handle_cookie(chrome_driver)
+    handle_cookie(driver)
     sleep(2)
     status = driver.find_elements(By.XPATH, "//div[@role='status' and @aria-live='polite']")[-1]
     number_of_pages = int(status.text.split("of")[-1].strip())
@@ -144,12 +154,14 @@ def get_game_week(driver: webdriver.Chrome) -> int:
 
 
 if __name__ == "__main__":
-    chrome_driver = webdriver.Chrome()
-    column_names = []
-    got_column_names = False
-    number_of_pages_to_scrape = 1
-    number_of_players_per_page = 2 # DEV VARIABLE
+    scrape_all = args_init()
+    print(scrape_all)
+    # chrome_driver = webdriver.Chrome()
+    # column_names = []
+    # got_column_names = False
+    # number_of_pages_to_scrape = 1
+    # number_of_players_per_page = 2 # DEV VARIABLE
     
-    get_all_stats(chrome_driver, number_of_pages_to_scrape, number_of_players_per_page)
-    game_week = get_game_week(chrome_driver)
-    chrome_driver.quit()
+    # get_all_stats(chrome_driver, number_of_pages_to_scrape, number_of_players_per_page)
+    # game_week = get_game_week(chrome_driver)
+    # chrome_driver.quit()
