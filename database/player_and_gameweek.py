@@ -112,7 +112,7 @@ def get_player_id_mapping(conn: psycopg.Connection):
         return {player["player_name"]: player["player_id"] for player in data}
 
 
-def get_player_gameweek(player: list[dict], player_mapping: dict):
+def get_player_gameweek(player: dict, player_mapping: dict):
     player_stats = []
     gameweeks = player["stats"]
     for week in gameweeks:
@@ -200,14 +200,16 @@ if __name__ == "__main__":
     conn_string = "postgresql:///fantasy_football?host=localhost"
     connection = psycopg.connect(conn_string)
     players_info = get_players()
-    player_id_mapping = get_player_id_mapping(connection)
+    players_info = [player for player in players_info if player["position"] != "Manager"]
 
     # Players table
     players_for_db = extract_info(players_info)
     upload_players(players_for_db, connection)
     print("uploaded players")
-    sleep(5)
+    sleep(3)
 
     # Gameweek table
+    player_id_mapping = get_player_id_mapping(connection)
     upload_gameweeks(players_info, player_id_mapping, connection)
     connection.close()
+    print("uploaded gameweeks")

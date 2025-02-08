@@ -7,8 +7,7 @@ VALUES
 (1, 'Goalkeeper'),
 (2, 'Defender'),
 (3, 'Midfielder'),
-(4, 'Forward'),
-(5, 'Manager')
+(4, 'Forward')
 ;
 
 INSERT INTO team
