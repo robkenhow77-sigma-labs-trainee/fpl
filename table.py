@@ -1,6 +1,5 @@
 from time import sleep
 
-
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -66,7 +65,7 @@ def format_form(current_form: str) -> list[dict]:
     return results[::-1]
 
 
-if __name__ == "__main__":
+def make_table_df():
     url = "https://www.bbc.co.uk/sport/football/premier-league/table"
     web_driver = webdriver.Chrome()
     web_driver.get(url)
@@ -74,8 +73,8 @@ if __name__ == "__main__":
     handle_cookie(web_driver)
     table_data = get_table_html(web_driver)
     table_data = format_table(table_data)
-    table_df = pd.DataFrame(table_data)
-    print(table_df)
+    return pd.DataFrame(table_data)
 
-    
 
+if __name__ == "__main__":
+    table_df = make_table_df()

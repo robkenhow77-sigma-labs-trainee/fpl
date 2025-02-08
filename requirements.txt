@@ -4,3 +4,4 @@ pandas
 Flask
 pylint
 selenium
+ psycopg[binary]
