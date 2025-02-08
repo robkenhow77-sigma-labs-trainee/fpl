@@ -1,7 +1,7 @@
 import psycopg
 import pandas as pd
 
-from table import make_table_df
+from prem_table import make_table_df
 
 
 def make_table_data_for_db(table_df: pd.DataFrame):
