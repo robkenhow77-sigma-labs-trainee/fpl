@@ -48,7 +48,8 @@ CREATE TABLE league (
 
 
 CREATE TABLE gameweek (
-    gameweek SERIAL PRIMARY KEY NOT NULL,
+    gameweek_id SERIAL PRIMARY KEY NOT NULL,
+    gameweek SMALLINT,
     player_id SMALLINT NOT NULL,
     result VARCHAR(1) NOT NULL,
     points SMALLINT NOT NULL,
