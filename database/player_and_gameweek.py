@@ -29,6 +29,7 @@ def map_club(club: str) -> int:
     "Villa": 2,
 
     "Bournemouth": 3,
+    "AFC Bournemouth": 3,
 
     "Brentford": 4,
 
