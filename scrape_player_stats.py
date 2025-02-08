@@ -83,7 +83,7 @@ def get_stats_for_page(driver: webdriver.Chrome, num_players) -> list:
     global column_names
     buttons = get_table_buttons(driver)
     players = []
-    for button in buttons[:num_players]:
+    for button in buttons:
         button.click()
         sleep(0.5)
         table = get_player_table(driver)
@@ -99,6 +99,7 @@ def get_stats_for_page(driver: webdriver.Chrome, num_players) -> list:
         player_info["stats"] = stats
         players.append(player_info)
         exit_table(driver)
+        sleep(0.5)
 
     return players
 
@@ -116,9 +117,9 @@ def change_page(driver: webdriver.Chrome) -> None:
 
 
 def make_file(all_stats: list[list[dict]]) -> None:
-    if path.exists('stats.json'):
-        remove('stats.json')
-    with open('stats.json', 'x', encoding="UTF-8") as file:
+    if path.exists('database/stats.json'):
+        remove('database/stats.json')
+    with open('database/stats.json', 'x', encoding="UTF-8") as file:
         json.dump(all_stats, file, indent=4)
 
 
@@ -156,12 +157,13 @@ def get_game_week(driver: webdriver.Chrome) -> int:
 if __name__ == "__main__":
     scrape_all = args_init()
     print(scrape_all)
-    # chrome_driver = webdriver.Chrome()
-    # column_names = []
-    # got_column_names = False
-    # number_of_pages_to_scrape = 1
-    # number_of_players_per_page = 2 # DEV VARIABLE
-    
-    # get_all_stats(chrome_driver, number_of_pages_to_scrape, number_of_players_per_page)
+    # chrome_options = webdriver.ChromeOptions()
+    # chrome_options.add_argument("--headless")
+    chrome_driver = webdriver.Chrome() #options=chrome_options
+    column_names = []
+    got_column_names = False
+    number_of_pages_to_scrape = 10
+    number_of_players_per_page = 10 # DEV VARIABLE
+    get_all_stats(chrome_driver, number_of_pages_to_scrape, number_of_players_per_page)
     # game_week = get_game_week(chrome_driver)
-    # chrome_driver.quit()
+    chrome_driver.quit()
