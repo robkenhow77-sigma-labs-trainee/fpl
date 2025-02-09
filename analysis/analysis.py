@@ -1,36 +1,50 @@
-import json
-
+import psycopg
 import pandas as pd
+from psycopg.rows import dict_row
+
+from fixtures import get_fixtures
 
 
-def load_json() -> dict:
-    with open('stats.json', "r", encoding="UTF-8") as file:
-        return json.load(file)
+def get_team_data(conn: psycopg.Connection):
+    sql = """
+    select * from team
+    left join league using (team_id);        
+    """
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(sql)
+        return cur.fetchall()
 
 
-def get_player_data(players: list[dict], name: str) -> dict:
-    for player_data in players:
-        if player_data["name"] == name:
-            return player_data
-    return "Player not found"
-
-
-def make_player_df(player_profile: dict) -> pd.DataFrame:
-    stats = player_profile["stats"]
-    df = pd.DataFrame(stats)
-    df["£"] = df["£"].apply(lambda x: x.replace("£", ""))
+def team_ratings(df: pd.DataFrame):
+    df = df[["team_name", "league_position", "previous_game", "game_2",
+           "game_3", "game_4", "game_5", "game_6"]].copy()
+    df["league_position"] = df["league_position"].apply(lambda x: (21 - x)/5)
+    df[["previous_game", "game_2"]] = df[["previous_game", "game_2"]].replace({"w": 3, "d": 0, "l": -3})
+    df[["game_3", "game_4"]] = df[["game_3", "game_4"]].replace({"w": 2, "d": 0, "l": -2})
+    df[["game_5", "game_6"]] = df[["game_5", "game_6"]].replace({"w": 1, "d": 0, "l": -1})
+    df["form"] = df[["previous_game", "game_2", "game_3", "game_4", "game_5", "game_6"]].sum(axis=1)
+    df["rating"] = df[["form", "league_position"]].sum(axis=1).round(2)
+    df = df[["team_name", "rating"]]
     return df
 
 
+def predict_fixtures(ratings: pd.DataFrame, fixtures: list[list]):
+    home = [team[0] for team in fixtures]
+    away = [team[1] for team in fixtures]
+    ratings_dict = ratings.to_dict(orient='records')
+    ratings_dict = {rating["team_name"]: rating["rating"] for rating in ratings_dict}
+    df = pd.DataFrame( {"home_team": home, "away_team": away} )
+
+    print(df)
+
+
+
 if __name__ == "__main__":
-    data = load_json()
-    player = "Mohamed Salah"
-    player_profile = get_player_data(data, player)
-    salah_df = make_player_df(player_profile)
-    salah_df = salah_df.drop(labels=0)
-    print(salah_df)
-    average_points_per_game = salah_df["Pts"].astype(int).mean().round(2)
-    print(average_points_per_game)
-    
-    
+    conn_string = "postgresql:///fantasy_football?host=localhost"
+    connection = psycopg.connect(conn_string)
+    match_fixtures = get_fixtures()
+    team_data = get_team_data(connection)
+    team_df = pd.DataFrame(team_data)
+    team_ratings_df = team_ratings(team_df)
+    print(predict_fixtures(team_ratings_df, match_fixtures))
     
