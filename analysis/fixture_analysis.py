@@ -15,6 +15,31 @@ def get_team_data(conn: psycopg.Connection):
         return cur.fetchall()
 
 
+def clean_ratings_dict(ratings: dict) -> dict:
+    return {
+        'Brighton': ratings['Brighton & Hove Albion'], 
+        'Chelsea': ratings['Chelsea'], 
+        'Leicester': ratings['Leicester City'],
+        'Arsenal': ratings['Arsenal'],
+        'Aston Villa': ratings['Aston Villa'],
+        'Ipswich': ratings['Ipswich Town'],
+        'Fulham': ratings['Fulham'],
+        "Nott'm Forest": ratings['Nottingham Forest'],
+        'Man City': ratings['Manchester City'],
+        'Newcastle': ratings['Newcastle United'],
+        'Southampton': ratings['Southampton'],
+        'Bournemouth': ratings['Bournemouth'], 
+        'West Ham': ratings['West Ham United'],
+        'Brentford': ratings['Brentford'],
+        'Crystal Palace': ratings['Crystal Palace'],
+        'Everton': ratings['Everton'],
+        'Liverpool': ratings['Liverpool'],
+        'Wolves': ratings['Wolverhampton Wanderers'], 
+        'Spurs': ratings['Tottenham Hotspur'],
+        'Man Utd': ratings['Manchester United']
+    }
+
+
 def team_ratings(df: pd.DataFrame):
     df = df[["team_name", "league_position", "previous_game", "game_2",
            "game_3", "game_4", "game_5", "game_6"]].copy()
@@ -33,10 +58,17 @@ def predict_fixtures(ratings: pd.DataFrame, fixtures: list[list]):
     away = [team[1] for team in fixtures]
     ratings_dict = ratings.to_dict(orient='records')
     ratings_dict = {rating["team_name"]: rating["rating"] for rating in ratings_dict}
-    df = pd.DataFrame( {"home_team": home, "away_team": away} )
-
-    print(df)
-
+    ratings_dict = clean_ratings_dict(ratings_dict)
+    df = pd.DataFrame({"home_team": home, "away_team": away})
+    df["home_rating"] = df["home_team"].apply(lambda x: ratings_dict[x] * 1.2)
+    df["away_rating"] = df["away_team"].apply(lambda x: ratings_dict[x] * 0.8)
+    df["prediction"] = df.apply(lambda row: 
+        "draw" if abs(row["home_rating"] - row["away_rating"]) < 1
+        else row["home_team"] if row["home_rating"] > row["away_rating"]
+        else row["away_team"],
+        axis=1)
+    
+    return df
 
 
 if __name__ == "__main__":
@@ -46,5 +78,5 @@ if __name__ == "__main__":
     team_data = get_team_data(connection)
     team_df = pd.DataFrame(team_data)
     team_ratings_df = team_ratings(team_df)
-    print(predict_fixtures(team_ratings_df, match_fixtures))
+    predcitions_df = predict_fixtures(team_ratings_df, match_fixtures)
     
