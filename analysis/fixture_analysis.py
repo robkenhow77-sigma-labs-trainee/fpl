@@ -1,8 +1,40 @@
+from time import sleep
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
 import psycopg
 import pandas as pd
 from psycopg.rows import dict_row
 
-from fixtures import get_fixtures
+
+def init_driver():
+    driver = webdriver.Chrome()
+    driver.get("https://fantasy.premierleague.com/fixtures/25")
+    sleep(2)
+    return driver
+
+
+def handle_cookie(driver: webdriver.Chrome) -> None:
+    cookie_button = driver.find_element(By.ID, "onetrust-reject-all-handler")
+    cookie_button.send_keys(Keys.RETURN)
+    sleep(1)
+
+
+def get_fixtures():
+    driver = init_driver()
+    handle_cookie(driver)
+    teams = driver.find_elements(By.CLASS_NAME, "styles__TeamName-sc-od3kjq-4.eMFDti")
+    fixtures = []
+    for i, team in enumerate(teams):
+        if i % 2 == 0:
+            fixture = []
+            fixture.append(team.text)
+            fixtures.append(fixture)
+        else:
+            fixture.append(team.text)
+    return fixtures
 
 
 def get_team_data(conn: psycopg.Connection):
@@ -71,12 +103,19 @@ def predict_fixtures(ratings: pd.DataFrame, fixtures: list[list]):
     return df
 
 
+def get_fixture_predictions(conn: psycopg.Connection):
+    match_fixtures = get_fixtures()
+    team_data = get_team_data(conn)
+    team_df = pd.DataFrame(team_data)
+    team_ratings_df = team_ratings(team_df)
+    return predict_fixtures(team_ratings_df, match_fixtures)
+
+
 if __name__ == "__main__":
     conn_string = "postgresql:///fantasy_football?host=localhost"
     connection = psycopg.connect(conn_string)
-    match_fixtures = get_fixtures()
-    team_data = get_team_data(connection)
-    team_df = pd.DataFrame(team_data)
-    team_ratings_df = team_ratings(team_df)
-    predcitions_df = predict_fixtures(team_ratings_df, match_fixtures)
-    
+
+    predictions = get_fixture_predictions(connection)
+    print(predictions)
+
+    connection.close()

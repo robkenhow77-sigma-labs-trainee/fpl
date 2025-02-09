@@ -6,3 +6,6 @@ pylint
 selenium
 psycopg[binary]
 psycopg2
+altair
+IPython
+vl-convert-python
